@@ -1,31 +1,30 @@
-import { createServer } from 'http';
-import { readFile } from 'node:fs/promises';
+const express = require("express");
+const path = require("path");
+const fs = require("fs").promises;
+const app = express();
+const port = 8080;
 
-const server = createServer((req, res) => {
-    if (req.url === '/styles.css') {
+app.use(express.static(path.join(__dirname + "/public")));
 
-        const filename = '.' + req.url;
+const routes = ["/", "/about", "/contact"];
 
-        readFile(filename).then(data => {
-            res.writeHead(200, {'Content-Type': 'text/css'});
-            res.end(data);
-        });
-    } 
+routes.forEach((route) => {
+  app.get(route, (req, res) => {
+    const filename =
+      route === "/" ? "./index.html" : "." + route.split(".")[0] + ".html";
 
-    else {
-        const filename = req.url === '/'? './index.html' : '.' + req.url.split('.')[0] + '.html';
-
-        readFile(filename).then(data => {
-            res.writeHead(200, {'Content-Type' : 'text/html'});
-            res.end(data);
-        }).catch(err => {
-            console.error(err);
-            readFile('./404.html').then(data => {
-                res.writeHead(404, {'Content-Type' : 'text/html'});
-                res.end(data);
-            })
-        })
-    }
+    fs.readFile(filename).then((data) => {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(data);
+    });
+  });
 });
 
-server.listen(8080);
+app.use((req, res, next) => {
+  fs.readFile("./404.html").then((data) => {
+    res.writeHead(404, { "Content-Type": "text/html" });
+    res.end(data);
+  });
+});
+
+app.listen(8080);
